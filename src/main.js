@@ -32,7 +32,7 @@ function calculateBonusByProfit(index, total, seller) {
   } else {
     bonus = 0;
   }
-  
+
   return profit * bonus;
 }
 
@@ -45,22 +45,22 @@ function calculateBonusByProfit(index, total, seller) {
 function analyzeSalesData(data, options) {
   // Проверка входных данных
   if (!data 
-      || !Array.isArray(data.sellers) 
-      || data.sellers.length === 0
-      || !Array.isArray(data.customers) 
-      || data.customers.length === 0 
-      || !Array.isArray(data.products) 
-      || data.products.length === 0 
-      || !Array.isArray(data.purchase_records) 
-      || data.purchase_records.length === 0) {
-        throw new Error("Некорректные входные данные");
+    || !Array.isArray(data.sellers) 
+    || data.sellers.length === 0 
+    || !Array.isArray(data.customers) 
+    || data.customers.length === 0 
+    || !Array.isArray(data.products) 
+    || data.products.length === 0 
+    || !Array.isArray(data.purchase_records) ||
+    data.purchase_records.length === 0) {
+    throw new Error("Некорректные входные данные");
   }
 
   // Проверка наличия опций
   const { calculateRevenue, calculateBonus } = options;
   if (!typeof calculateRevenue === "function" 
-      || !typeof calculateBonus === "function") {
-        throw new Error("Некорректные опции");
+    || !typeof calculateBonus === "function") {
+    throw new Error("Некорректные опции");
   }
 
   // Подготовка промежуточных данных для сбора статистики
@@ -80,15 +80,15 @@ function analyzeSalesData(data, options) {
   }), {});
 
   // Расчет выручки и прибыли для каждого продавца
-  data.purchase_records.forEach(record => { 
+  data.purchase_records.forEach(record => {
     const seller = sellerStats.find(item => item.id === record.seller_id);
-    
+
     seller.sales_count += 1;
     seller.revenue += record.total_amount;
 
     // Расчёт прибыли для каждого товара
     record.items.forEach(item => {
-      const product = productIndex[item.sku]; 
+      const product = productIndex[item.sku];
       const cost = product.purchase_price * item.quantity;
       const simpleRevenue = options.calculateRevenue(item, product);
 
@@ -100,31 +100,31 @@ function analyzeSalesData(data, options) {
 
       seller.products_sold[item.sku] += item.quantity;
     });
- });
+  });
 
   // Сортировка продавцов по прибыли
-  sellerStats.sort((a, b) => b.profit - a.profit); 
+  sellerStats.sort((a, b) => b.profit - a.profit);
 
   // Назначение премий на основе ранжирования
   sellerStats.forEach((seller, index) => {
     seller.bonus = options.calculateBonus(index, sellerStats.length, seller);
     seller.top_products = Object.entries(seller.products_sold)
-                          .map(([sku, quantity]) => ({
-                            sku,
-                            quantity
-                          }))
-                          .sort((a, b) => b.quantity - a.quantity)
-                          .splice(0, 10);
+      .map(([sku, quantity]) => ({
+        sku,
+        quantity
+      }))
+      .sort((a, b) => b.quantity - a.quantity)
+      .splice(0, 10);
   });
 
   // Подготовка итоговой коллекции с нужными полями
   return sellerStats.map(seller => ({
-        seller_id: seller.id,
-        name: seller.name,
-        revenue: +seller.revenue.toFixed(2),
-        profit: +seller.profit.toFixed(2),
-        sales_count: seller.sales_count,
-        top_products: seller.top_products,
-        bonus: +seller.bonus.toFixed(2)
-}));
+    seller_id: seller.id,
+    name: seller.name,
+    revenue: +seller.revenue.toFixed(2),
+    profit: +seller.profit.toFixed(2),
+    sales_count: seller.sales_count,
+    top_products: seller.top_products,
+    bonus: +seller.bonus.toFixed(2)
+  }));
 }
